@@ -12,11 +12,65 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="toast toast__is-hidden"></div>
-    <main>
+    <modal class="toast toast__is-hidden"></modal>
+
+    <div class="overlay">
+      <!-- close button -->
+      <span id="close_overlay" class="overlay__close">x</span>
+
+      <section class="details">
+        <h2 id="detailTitle"></h2>
+
+        <ul id="listGeners" class="list-x"></ul>
+
+        <p id="detailDescription"></p>
+
+        <div class="details__info_wrap">
+          <div>
+            <section class="detail__wrap">
+              <h3>Durata</h3>
+              <span id="detailDuration"></span>
+            </section>
+
+            <section class="detail__wrap">
+              <h3>Data di uscita:</h3>
+              <span id="detailDate"></span>
+            </section>
+
+            <section class="detail__wrap">
+              <h3>Nazioni di produzione</h3>
+              <ul id="countriesList"></ul>
+            </section>
+          </div>
+
+          <div>
+            <section class="detail__wrap">
+              <h3>Cast</h3>
+              <ul id="castList"></ul>
+            </section>
+            <section class="detail__wrap">
+              <h3>Regia</h3>
+              <ul id="productionList"></ul>
+            </section>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <main class="container">
+      <h1>Movie DB</h1>
       <section>
         <h2>Film popolari</h2>
-        <div id="popularMovies" class="carousel"></div>
+        <div id="popular" class="carousel"></div>
+        <div id="next">></div>
+      </section>
+      <section>
+        <h2>Film più votati</h2>
+        <div id="topRated" class="carousel"></div>
+      </section>
+      <section>
+        <h2>Serie televisive più popolari</h2>
+        <div id="topRatedTv" class="carousel"></div>
       </section>
     </main>
     <script src="index.js"></script>
