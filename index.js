@@ -1,22 +1,5 @@
-/**Es. 1
-Aggiungere carousel per i film più votati 
-https://developers.themoviedb.org/3/movies/get-top-rated-movies 
-
-Es. 2 
-Aggiungere carousel per le serie TV più popolari 
-https://developers.themoviedb.org/3/tv/get-popular-tv-shows
-
-Es. 3 (opzionale)
-Ascoltare il click sulle card, aprire un overlay su tutta la pagina. Fare la chiamata al film o serie tv per ottenere i dettagli
-https://developers.themoviedb.org/3/movies/get-movie-details
-*/
-
 const TOAST = document.querySelector(".toast");
 const POPULAR_MOVIES = document.querySelector("#popularMovies");
-const TOPRATED_MOVIES = document.querySelector("#topRatedMovies");
-const POPULAR_SERIES = document.querySelector("#popularTvSeries");
-
-
 
 const state = {
   config: {
@@ -96,12 +79,6 @@ async function getConfiguration() {
  * ottiene i la lista di film più popolari
  *
  * @link https://developers.themoviedb.org/3/movies/get-popular-movies
- * 
- * top rated:
- * https://developers.themoviedb.org/3/movies/get-top-rated-movies
- * 
- * pop series:
- * https://developers.themoviedb.org/3/tv/get-popular-tv-shows
  */
 async function getPopularMovies() {
   const popularMoviesURL = getUrl("/movie/popular");
@@ -111,26 +88,6 @@ async function getPopularMovies() {
   state.movies = rawResponse.results;
 
   return rawResponse;
-}
-
-async function getTopRatedMovies() {
-    const topRatedURL = getUrl("/movie/top_rated");
-  
-    const rawResponse = await getData(topRatedURL);
-  
-    state.movies = rawResponse.results;
-  
-    return rawResponse;
-  }
-  
-async function getPopularSeries() {
-    const popSeriesURL = getUrl("/tv/popular");
-
-    const rawResponse = await getData(popSeriesURL);
-
-    state.movies = rawResponse.results;
-
-    return rawResponse;
 }
 
 /**
@@ -176,7 +133,7 @@ async function handleSession() {
     /**
      * controlliamo che la sessione non sia scacduta
      *
-     * la data di scadenza della sessione è centenuta
+     * la data di scadenza della sessione è contenuta
      * nell'oggetta della sessione sotto il nome "expires_at"
      *
      * utilizziamo Date per verificare se la data di scadenza è inferiore
@@ -197,7 +154,7 @@ async function handleSession() {
       localStorage.removeItem("mdb_session");
 
       // chiamiamo la funzione stessa per gestire la
-      // creazione di una nuova sessione e l'inseirmento nel localStorage
+      // creazione di una nuova sessione e l'inserimento nel localStorage
       await handleSession();
 
       return true;
@@ -228,7 +185,6 @@ function getMovieCard(imgURL, title) {
 
   const textWrap = document.createElement("div");
   const text = document.createElement("h3");
-  
 
   cardWrap.classList.add("card");
   textWrap.classList.add("card__title_wrap");
@@ -238,10 +194,6 @@ function getMovieCard(imgURL, title) {
 
   textWrap.appendChild(text);
   cardWrap.append(coverImg, textWrap);
-
-  cardWrap.addEventListener("click", overlay, {
-    once: true
-  });
 
   return cardWrap;
 }
@@ -275,25 +227,6 @@ function handleHTMLMounted() {
   );
 }
 
-function handleHTMLMounted2() {
-    Promise.all([handleSession(), getConfiguration(), getTopRatedMovies()]).then(
-      () => {
-        // ci permette di lavorare con i dati ottenuti dall'esterno
-        renderCarousel(state.movies, TOPRATED_MOVIES);
-      }
-    );
-}
-
-function handleHTMLMounted3() {
-    Promise.all([handleSession(), getConfiguration(), getPopularSeries()]).then(
-      () => {
-        // ci permette di lavorare con i dati ottenuti dall'esterno
-        renderCarousel(state.movies, POPULAR_SERIES);
-      }
-    );
-}
-
-
 /**
  * listener sul lifecycle "DOMContentLoaded"
  *
@@ -305,28 +238,3 @@ function handleHTMLMounted3() {
 document.addEventListener("DOMContentLoaded", handleHTMLMounted, {
   once: true
 });
-
-document.addEventListener("DOMContentLoaded", handleHTMLMounted2, {
-    once: true
-});
-
-document.addEventListener("DOMContentLoaded", handleHTMLMounted3, {
-    once: true
-});
-
-
-const modal = document.querySelector('.modal');
-
-function overlay() {
-    
-    modal.classList.toggle('modal__toggle');
-    
-
-}
-
-const modalClose = document.querySelector('.modal__close');
-modalClose.addEventListener('click', close);
-
-function close(){
-    modal.classList.remove('modal__toggle');
-}

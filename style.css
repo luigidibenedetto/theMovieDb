@@ -3,15 +3,6 @@
   padding: 0;
 }
 
-:root {
-  --primary-text: #473198;
-  --secondary-text: #2b4162;
-  --secondary-bgc: #b7ffd8;
-  font-family: "Roboto", sans-serif;
-  overflow-x: hidden;
-  overflow-y: scroll;
-}
-
 img {
   border-style: none;
 }
@@ -20,72 +11,6 @@ body {
   --primary-text: #473198;
   font-family: "Roboto", sans-serif;
   position: relative;
-}
-
-.details {
-  background-color: white;
-  width: 100%;
-  max-width: 600px;
-  padding: 60px;
-  min-height: 100vh;
-  box-shadow: -20px 15px 12px 0 rgb(0 0 0 / 6%);
-}
-
-.details h2 {
-  color: var(--primary-text);
-  font-size: 4rem;
-  margin-bottom: 40px;
-}
-
-.details h3 {
-  color: var(--secondary-text);
-  font-size: 1rem;
-  margin-bottom: 3px;
-}
-
-.detail__wrap {
-  margin-bottom: 30px;
-}
-
-.details__info_wrap {
-  display: flex;
-  width: 100%;
-  margin-top: 50px;
-}
-
-.details__info_wrap div {
-  flex-basis: 50%;
-}
-
-.details ul {
-  list-style-type: none;
-  margin-bottom: 20px;
-}
-
-.details li {
-  margin-bottom: 5px;
-}
-
-.list-x {
-  display: flex;
-  color: var(--secondary-text);
-  font-style: italic;
-}
-
-.list-x li {
-  margin-right: 8px;
-  margin-bottom: 0;
-  text-decoration: underline;
-}
-
-h1 {
-  color: var(--primary-text);
-  font-size: 3rem;
-}
-
-
-section h2 {
-  margin: 10px;
 }
 
 .toast {
@@ -118,7 +43,6 @@ section h2 {
   position: relative;
   margin-right: 5px;
   scroll-snap-align: start;
-  cursor: pointer;
 }
 
 .card__title_wrap {
@@ -130,51 +54,4 @@ section h2 {
   background-color: rgba(0, 0, 0, 0.8);
   box-shadow: 0 -8px 20px 3px black;
   color: white;
-}
-
-.modal {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  transform: translateX(-100%);
-  transition: 0.4s ease-in-out;
-}
-.modal__toggle {
-  transform: translateX(0);
-}
-
-.modal__overlay {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  
-}
-
-.modal__body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  position: absolute;
-  height: 50%;
-  width: 50%;
-  left: 25%;
-  top: 25%;
-  background-color: white;
-  border-radius: 5px;
-  overflow: auto;  
-}
-
-.modal__close {
-  cursor: pointer;
-  font-size: 35px;
-  position:absolute;
-  top: 115px;
-  right: 230px;
 }
