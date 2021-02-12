@@ -1,51 +1,48 @@
-const banner = document.querySelector("modal");
-const popularSection = document.querySelector("#popular");
-const topRatedSection = document.querySelector("#topRated");
-const topRatedTvSection = document.querySelector("#topRatedTv");
-const overlay = document.querySelector(".overlay");
-const closeOverlay = document.querySelector("#close_overlay");
+/**Es. 1
+Aggiungere carousel per i film più votati 
+https://developers.themoviedb.org/3/movies/get-top-rated-movies 
 
-// Movie Detail elements
-const detailTitle = document.querySelector("#detailTitle");
-const listGeners = document.querySelector("#listGeners");
-const detailDescription = document.querySelector("#detailDescription");
-const detailDuration = document.querySelector("#detailDuration");
-const detailDate = document.querySelector("#detailDate");
-const countriesList = document.querySelector("#countriesList");
-const castList = document.querySelector("#castList");
-const productionList = document.querySelector("#productionList");
+Es. 2 
+Aggiungere carousel per le serie TV più popolari 
+https://developers.themoviedb.org/3/tv/get-popular-tv-shows
 
-/**
- * STATE
- * stato dell'applicazione dove poter salvare i dati
- * ottenuti dall'esterno e/o dati di configurazioe
- */
+Es. 3 (opzionale)
+Ascoltare il click sulle card, aprire un overlay su tutta la pagina. Fare la chiamata al film o serie tv per ottenere i dettagli
+https://developers.themoviedb.org/3/movies/get-movie-details
+*/
+
+const TOAST = document.querySelector(".toast");
+const POPULAR_MOVIES = document.querySelector("#popularMovies");
+const TOPRATED_MOVIES = document.querySelector("#topRatedMovies");
+const POPULAR_SERIES = document.querySelector("#popularTvSeries");
+
+
+
 const state = {
   config: {
     api_key: "81abe82ed06ba133fa0b2c72305a7650",
     base_url: "https://api.themoviedb.org/3",
-    language: navigator.language
+    images: null
   },
-  movies: {
-    popular: null,
-    top_rated: null,
-    moviesDetails: {},
-    moviesCredits: {}
-  },
-  tv: {
-    popular: null,
-    top_rated: null
-  }
+  movies: null
 };
 
 /**
- * UTILITIES
- * funzioni che aiutano a rendere il codice più leggibile,
- * pulito e non ripetitivo
+ * Utilities
  */
 function getUrl(pathName) {
   const { api_key, base_url } = state.config;
-  return `${base_url}${pathName}?api_key=${api_key}&language=${state.config.language}`;
+
+  return `${base_url}${pathName}?api_key=${api_key}`;
+}
+
+function getImageUrl(imgPath) {
+  // const { secure_base_url, backdrop_sizes } = state.config.images
+
+  const secure_base_url = state.config.images.secure_base_url;
+  const backdrop_sizes = state.config.images.backdrop_sizes;
+
+  return `${secure_base_url}${backdrop_sizes[0]}${imgPath}`;
 }
 
 async function getData(url) {
@@ -62,259 +59,274 @@ async function getData(url) {
   }
 }
 
+/**
+ * Actions per caricare i dati
+ */
+
+/**
+ * crea un guest session id e ritorna un oggetto con i dati riguardati la sessione
+ *
+ * @link https://developers.themoviedb.org/3/authentication/create-guest-session
+ */
 async function getGuestSession() {
   const guestSessionUrl = getUrl("/authentication/guest_session/new");
+
   const result = await getData(guestSessionUrl);
 
   return result;
 }
 
-function isSessionExpired(expireDate) {
-  const expireDateMs = new Date(expireDate).getTime();
-  const nowTimeMs = new Date().getTime();
-
-  return expireDateMs < nowTimeMs;
-}
-
 /**
- * STORAGE
- * funzioni che modificano il localStorage
+ * ottiene i dati di configurazione
+ *
+ * @link https://developers.themoviedb.org/3/configuration/get-api-configuration
  */
-async function handleSession() {
-  const sessionData = localStorage.getItem("mdb_session");
-
-  if (!sessionData) {
-    const newSessionData = await getGuestSession();
-
-    if (newSessionData) {
-      const sessionDataString = JSON.stringify(newSessionData);
-
-      localStorage.setItem("mdb_session", sessionDataString);
-      showToastBanner();
-      return true;
-    }
-
-    return false;
-  } else {
-    const parsedSessionData = JSON.parse(sessionData);
-
-    if (isSessionExpired(parsedSessionData.expires_at)) {
-      localStorage.removeItem("mdb_session");
-      await handleSession();
-      return true;
-    }
-  }
-}
-
-/**
- * ACTIONS
- * funzioni che modificanao lo stato dell'applicazione
- */
-async function getPopularMovies() {
-  const popularMoviesUrl = getUrl("/movie/popular");
-  const result = await getData(`${popularMoviesUrl}`);
-
-  state.movies.popular = result.results;
-
-  return result;
-}
-
-async function getTopRatedMovies() {
-  const topRatedMoviesUrl = getUrl("/movie/top_rated");
-  const result = await getData(`${topRatedMoviesUrl}`);
-
-  state.movies.top_rated = result.results;
-
-  return result;
-}
-
-async function getTopRatedTv() {
-  const topRatedTvUrl = getUrl("/tv/top_rated");
-  const result = await getData(`${topRatedTvUrl}`);
-
-  state.tv.top_rated = result.results;
-
-  return result;
-}
-
-async function getMovieDetails(id) {
-  const movieDetailsUrl = getUrl(`/movie/${id}`);
-  const result = await getData(`${movieDetailsUrl}`);
-
-  state.movies.moviesDetails[id] = result;
-
-  return result;
-}
-
-async function getMovieCredits(id) {
-  const movieCreditsUrl = getUrl(`/movie/${id}/credits`);
-  const result = await getData(`${movieCreditsUrl}`);
-
-  state.movies.moviesCredits[id] = result;
-
-  return result;
-}
-
-async function getImagesConfig() {
+async function getConfiguration() {
   const configurationUrl = getUrl("/configuration");
+
   const result = await getData(configurationUrl);
 
+  // aggiorniamo il nostro state interno con i dati ricevuti
   state.config.images = result.images;
 
   return result;
 }
 
 /**
- * VIEW
- * funzioni che modificano gli elementi presenti in pagina
+ * ottiene i la lista di film più popolari
+ *
+ * @link https://developers.themoviedb.org/3/movies/get-popular-movies
+ * 
+ * top rated:
+ * https://developers.themoviedb.org/3/movies/get-top-rated-movies
+ * 
+ * pop series:
+ * https://developers.themoviedb.org/3/tv/get-popular-tv-shows
  */
+async function getPopularMovies() {
+  const popularMoviesURL = getUrl("/movie/popular");
 
-function toggleOverlay() {
-  overlay.classList.toggle("overlay__is-visible");
+  const rawResponse = await getData(popularMoviesURL);
+
+  state.movies = rawResponse.results;
+
+  return rawResponse;
 }
 
-function showToastBanner() {
-  banner.classList.toggle("banner__is-hidden");
+async function getTopRatedMovies() {
+    const topRatedURL = getUrl("/movie/top_rated");
+  
+    const rawResponse = await getData(topRatedURL);
+  
+    state.movies = rawResponse.results;
+  
+    return rawResponse;
+  }
+  
+async function getPopularSeries() {
+    const popSeriesURL = getUrl("/tv/popular");
 
-  setTimeout(() => {
-    banner.classList.toggle("banner__is-hidden");
-  }, 4000);
-}
+    const rawResponse = await getData(popSeriesURL);
 
-function renderList(stringList, section) {
-  section.textContent = "";
+    state.movies = rawResponse.results;
 
-  stringList.forEach((text) => {
-    const li = document.createElement("li");
-    li.textContent = text;
-    section.append(li);
-  });
+    return rawResponse;
 }
 
 /**
- * crea un elemento MovieCard formato da
- * un'immagine e il titolo in sovrapposizione a tutto
- * un elemento <a> al quaale viene assegnato l'id del film
- * per gestie il click dell'utente
+ * gestisce la sessione guest dell'utente
  *
- * @param {string} coverUrl
- * @param {string} text
- * @param {string} id
+ * NOTA:
+ * durante le fasi della funzione tornniamo un valore boolean.
+ * Questo viene utilizzato da Promise.all in handleHTMLMounted
+ * per capire quando la nostra funzione a terminato
+ * essendo asincrona.
+ *
  */
-const MovieCard = (coverUrl, text, id) => {
-  const cardWrap = document.createElement("article");
+async function handleSession() {
+  // ottiene il dato da localStorage
+  const sessionData = localStorage.getItem("mdb_session");
+
+  // se sessionData è undefined
+  if (!sessionData) {
+    // crea una nuova sessione
+    const newSessionData = await getGuestSession();
+
+    // se la chiamata getGuestSession ritorna un valore
+    if (newSessionData) {
+      // trasforma in stringa l'oggetto (localStorage può avere solo stringhe)
+      const sessionDataString = JSON.stringify(newSessionData);
+
+      // aggiunge il valore nel localStorage
+      localStorage.setItem("mdb_session", sessionDataString);
+
+      // mostra il toastBaner per dare un feedback alll'utente
+      showToast("Hey! Adesso sei registrato come guest");
+
+      return true;
+    }
+
+    return false;
+  } else {
+    // se sessionData ha un valore
+
+    // trasforma la stringa ottenuta da localSotarge in oggetto o variabile primitiva
+    const parsedSessionData = JSON.parse(sessionData);
+
+    /**
+     * controlliamo che la sessione non sia scacduta
+     *
+     * la data di scadenza della sessione è centenuta
+     * nell'oggetta della sessione sotto il nome "expires_at"
+     *
+     * utilizziamo Date per verificare se la data di scadenza è inferiore
+     * alla data attuale nel momento in cui sta eseguendo questo codice.
+     *
+     * trasformiamo le due date con getTime() in un numero che corrisponde
+     * ai millisecondi compresi tra la data usata e il 1 gennaio 1970
+     * (è uno standard per avere una costante di riferimento)
+     *
+     */
+    const expiresDate = new Date(parsedSessionData.expires_at).getTime();
+    const nowDate = new Date().getTime();
+
+    // se expiresDate in millisecondi è inferiore
+    // a nowDate in millisecondi allora la sessione è scaduta
+    if (expiresDate < nowDate) {
+      // rimuoviamo i dati della sessione del localStorage
+      localStorage.removeItem("mdb_session");
+
+      // chiamiamo la funzione stessa per gestire la
+      // creazione di una nuova sessione e l'inseirmento nel localStorage
+      await handleSession();
+
+      return true;
+    }
+    return true;
+  }
+}
+
+/**
+ * Mostra il toast banner per 4s con il messaggio
+ * che gli viene passato come parametro
+ */
+function showToast(text) {
+  TOAST.textContent = text;
+  TOAST.classList.toggle("toast__is-hidden");
+
+  setTimeout(() => {
+    TOAST.classList.toggle("toast__is-hidden");
+  }, 4000);
+}
+
+/**
+ * Crea una card per i film / serie tv
+ */
+function getMovieCard(imgURL, title) {
+  const cardWrap = document.createElement("div");
   const coverImg = document.createElement("img");
-  const link = document.createElement("a");
 
-  const titleWrap = document.createElement("div");
-  const title = document.createElement("h3");
-
-  title.textContent = text;
-  coverImg.src = coverUrl;
-  link.id = id;
+  const textWrap = document.createElement("div");
+  const text = document.createElement("h3");
+  
 
   cardWrap.classList.add("card");
-  titleWrap.classList.add("card__title_wrap");
+  textWrap.classList.add("card__title_wrap");
 
-  /**
-   * questa classe fa in modo che l'element <a> diventi layer
-   * sopra tutti gli altri elementi in modo da poter gestire
-   * il click ovunque sulla card
-   */
-  link.classList.add("card__link");
+  text.textContent = title;
+  coverImg.src = imgURL;
 
-  titleWrap.appendChild(title);
-  cardWrap.append(coverImg, titleWrap, link);
+  textWrap.appendChild(text);
+  cardWrap.append(coverImg, textWrap);
+
+  cardWrap.addEventListener("click", overlay, {
+    once: true
+  });
 
   return cardWrap;
-};
+}
 
+/**
+ * genera le card per i film presenti nel parametro "list"
+ * e li appende dentro il nodo parent passato come secondo parametro
+ * "sectionNode"
+ */
 function renderCarousel(list, sectionNode) {
   list.forEach((item) => {
-    const { base_url, backdrop_sizes } = state.config.images;
-    const coverUrl = `${base_url}${backdrop_sizes[0]}${item.backdrop_path}`;
+    // ottiene la url dell'immagine completa
+    const imgURL = getImageUrl(item.backdrop_path);
 
-    const movieCard = MovieCard(coverUrl, item.title || item.name, item.id);
+    const movieCard = getMovieCard(imgURL, item.title);
 
     sectionNode.appendChild(movieCard);
   });
 }
 
-function renderCredits(credits) {
-  const cast = credits.cast.slice(0, 5).map((actor) => actor.name);
-
-  const crew = credits.crew
-    .filter((person) => person.job === "Director")
-    .map((person) => person.name);
-
-  renderList(cast, castList);
-  renderList(crew, productionList);
+/**
+ * funzione che ottiene i dati dall'eseterno,
+ * e quando li ha ottenuti renderizza il carosello dei film popolari
+ */
+function handleHTMLMounted() {
+  Promise.all([handleSession(), getConfiguration(), getPopularMovies()]).then(
+    () => {
+      // ci permette di lavorare con i dati ottenuti dall'esterno
+      renderCarousel(state.movies, POPULAR_MOVIES);
+    }
+  );
 }
 
-function renderDetails(details) {
-  detailTitle.textContent = details.title;
-  detailDescription.textContent = details.overview;
-  detailDuration.textContent = `${details.runtime} minuti`;
-
-  const date = new Date(details.release_date);
-
-  detailDate.textContent = new Intl.DateTimeFormat(state.config.language, {
-    dateStyle: "long"
-  }).format(date);
-
-  const genres = details.genres.map((genre) => genre.name);
-  const countries = details.production_countries.map((country) => country.name);
-
-  renderList(genres, listGeners);
-  renderList(countries, countriesList);
+function handleHTMLMounted2() {
+    Promise.all([handleSession(), getConfiguration(), getTopRatedMovies()]).then(
+      () => {
+        // ci permette di lavorare con i dati ottenuti dall'esterno
+        renderCarousel(state.movies, TOPRATED_MOVIES);
+      }
+    );
 }
 
-async function handleMovieDetails(event) {
-  const movieId = event.target.id;
-
-  if (!state.movies.moviesDetails[movieId]) {
-    await Promise.all([getMovieDetails(movieId), getMovieCredits(movieId)]);
-  }
-
-  renderDetails(state.movies.moviesDetails[movieId]);
-  renderCredits(state.movies.moviesCredits[movieId]);
-
-  toggleOverlay();
+function handleHTMLMounted3() {
+    Promise.all([handleSession(), getConfiguration(), getPopularSeries()]).then(
+      () => {
+        // ci permette di lavorare con i dati ottenuti dall'esterno
+        renderCarousel(state.movies, POPULAR_SERIES);
+      }
+    );
 }
 
-async function handleMounted() {
-  await Promise.all([
-    handleSession(),
-    getImagesConfig(),
-    getPopularMovies(),
-    getTopRatedMovies(),
-    getTopRatedTv()
-  ]);
-
-  renderCarousel(state.movies.popular, popularSection);
-  renderCarousel(state.movies.top_rated, topRatedSection);
-  renderCarousel(state.tv.top_rated, topRatedTvSection);
-}
 
 /**
- * EVENTS
- * funzioni e listener legati agli eventi
+ * listener sul lifecycle "DOMContentLoaded"
+ *
+ * esegue la funzione handleHTMLMounted appena l'html del nostro
+ * index.html è stato stampato a video
+ *
+ * rimuove il listenr una volta terminata l'operazione con {once: true}
  */
-function handleUnload() {
-  closeOverlay.removeEventListener("click", toggleOverlay);
-  popularSection.removeEventListener("click", handleMovieDetails);
-  topRatedSection.removeEventListener("click", handleMovieDetails);
+document.addEventListener("DOMContentLoaded", handleHTMLMounted, {
+  once: true
+});
+
+document.addEventListener("DOMContentLoaded", handleHTMLMounted2, {
+    once: true
+});
+
+document.addEventListener("DOMContentLoaded", handleHTMLMounted3, {
+    once: true
+});
+
+
+const modal = document.querySelector('.modal');
+
+function overlay() {
+    
+    modal.classList.toggle('modal__toggle');
+    
+
 }
 
-/**
- * USER EVENTS
- */
-closeOverlay.addEventListener("click", toggleOverlay);
-popularSection.addEventListener("click", handleMovieDetails);
-topRatedSection.addEventListener("click", handleMovieDetails);
+const modalClose = document.querySelector('.modal__close');
+modalClose.addEventListener('click', close);
 
-/**
- * LIFECYCLE EVENTS
- */
-document.addEventListener("DOMContentLoaded", handleMounted, { once: true });
-document.addEventListener("beforeunload", handleUnload, { once: true });
+function close(){
+    modal.classList.remove('modal__toggle');
+}
